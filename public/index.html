@@ -1,0 +1,84 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cyber Job Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="bg-grid" aria-hidden="true"></div>
+    <main class="app-shell">
+      <header class="app-header">
+        <h1>Cyber Job Tracker</h1>
+        <p>Track effort daily. Stay deadline-aware.</p>
+      </header>
+
+      <section id="auth-section" class="card">
+        <h2>Login</h2>
+        <form id="login-form">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" required minlength="8" autocomplete="current-password" />
+          <button type="submit">Sign in</button>
+          <p id="login-message" class="message"></p>
+        </form>
+      </section>
+
+      <section id="dashboard-section" class="hidden">
+        <div class="card">
+          <div class="row-between">
+            <h2>Daily Log</h2>
+            <button id="logout-btn" class="secondary" type="button">Logout</button>
+          </div>
+
+          <form id="log-form" class="log-form">
+            <label for="date">Date</label>
+            <input id="date" name="date" type="date" required />
+
+            <label for="applications">Applications</label>
+            <input id="applications" name="applications" type="number" min="0" required />
+
+            <label for="recruiters">Recruiters Contacted</label>
+            <input id="recruiters" name="recruiters" type="number" min="0" required />
+
+            <label for="projectHours">Project Hours</label>
+            <input id="projectHours" name="projectHours" type="number" min="0" step="0.5" required />
+
+            <button type="submit">Save Log</button>
+            <p id="log-message" class="message"></p>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Deadlines</h2>
+          <ul id="deadlines-list" class="deadline-list"></ul>
+        </div>
+
+        <div class="card">
+          <h2>History</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Applications</th>
+                  <th>Recruiters</th>
+                  <th>Project Hours</th>
+                </tr>
+              </thead>
+              <tbody id="history-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="/app.js" defer></script>
+  </body>
+</html>
