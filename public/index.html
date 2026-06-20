@@ -11,13 +11,23 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/styles.css" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#0f766e" />
+    <meta name="description" content="Career Pilot: Track job applications, prepare for interviews, and manage recruiter relationships." />
   </head>
   <body>
     <div class="bg-grid" aria-hidden="true"></div>
     <main class="app-shell">
       <header class="app-header">
-        <h1>Cyber Job Tracker</h1>
-        <p>Track effort daily. Stay deadline-aware.</p>
+        <div class="header-row">
+          <div>
+            <h1>Cyber Job Tracker</h1>
+            <p>Track effort daily. Stay deadline-aware.</p>
+          </div>
+          <div class="header-actions">
+            <button id="theme-toggle" aria-pressed="false" aria-label="Toggle theme" title="Toggle theme">🌙</button>
+          </div>
+        </div>
       </header>
 
       <section id="auth-section" class="card">
@@ -26,7 +36,7 @@
           <label for="password">Password</label>
           <input id="password" name="password" type="password" required minlength="8" autocomplete="current-password" />
           <button type="submit">Sign in</button>
-          <p id="login-message" class="message"></p>
+          <p id="login-message" class="message" role="status" aria-live="polite"></p>
         </form>
       </section>
 
@@ -51,7 +61,7 @@
             <input id="projectHours" name="projectHours" type="number" min="0" step="0.5" required />
 
             <button type="submit">Save Log</button>
-            <p id="log-message" class="message"></p>
+            <p id="log-message" class="message" role="status" aria-live="polite"></p>
           </form>
         </div>
 
@@ -76,9 +86,207 @@
             </table>
           </div>
         </div>
+        
+        <div class="card" id="applications-card">
+          <div class="row-between">
+            <h2>Applications</h2>
+            <div>
+              <input id="app-search" placeholder="Search by company or title" />
+              <button id="kanban-toggle" class="secondary" type="button">Toggle Kanban</button>
+            </div>
+          </div>
+
+          <form id="application-form" class="app-form">
+            <label for="app-title">Title</label>
+            <input id="app-title" name="title" type="text" />
+
+            <label for="app-company">Company</label>
+            <input id="app-company" name="company" type="text" />
+
+            <label for="app-date">Date applied</label>
+            <input id="app-date" name="dateApplied" type="date" />
+
+            <label for="app-status">Status</label>
+            <select id="app-status" name="status">
+              <option>Saved</option>
+              <option>Applied</option>
+              <option>Assessment</option>
+              <option>Interview</option>
+              <option>Offer</option>
+              <option>Rejected</option>
+              <option>Withdrawn</option>
+            </select>
+
+            <label for="app-tags">Tags (comma separated)</label>
+            <input id="app-tags" name="tags" type="text" />
+
+            <label for="app-notes">Notes</label>
+            <input id="app-notes" name="notes" type="text" />
+
+            <div class="form-actions">
+              <button type="submit">Save Application</button>
+              <button type="button" id="app-cancel" class="secondary">Cancel</button>
+            </div>
+          </form>
+
+          <div id="applications-list" class="app-list"></div>
+
+          <div id="kanban-board" class="kanban hidden">
+            <div class="kanban-column" data-status="Saved"><h3>Saved</h3><div class="kanban-items"></div></div>
+            <div class="kanban-column" data-status="Applied"><h3>Applied</h3><div class="kanban-items"></div></div>
+            <div class="kanban-column" data-status="Assessment"><h3>Assessment</h3><div class="kanban-items"></div></div>
+            <div class="kanban-column" data-status="Interview"><h3>Interview</h3><div class="kanban-items"></div></div>
+            <div class="kanban-column" data-status="Offer"><h3>Offer</h3><div class="kanban-items"></div></div>
+            <div class="kanban-column" data-status="Rejected"><h3>Rejected</h3><div class="kanban-items"></div></div>
+            <div class="kanban-column" data-status="Withdrawn"><h3>Withdrawn</h3><div class="kanban-items"></div></div>
+          </div>
+        </div>
+
+        <div class="card" id="cv-card">
+          <h2>UK CV Formatter</h2>
+          <div class="row-between">
+            <div>
+              <label for="cv-upload">Upload CV (PDF, DOCX, TXT)</label>
+              <input id="cv-upload" type="file" accept=".pdf,.docx,.txt" />
+            </div>
+            <div>
+              <button id="cv-refresh" class="secondary" type="button">Refresh Docs</button>
+            </div>
+          </div>
+          <div id="docs-list"></div>
+
+          <h3>Or build profile</h3>
+          <form id="profile-form" class="app-form">
+            <label for="p-name">Name</label>
+            <input id="p-name" />
+            <label for="p-email">Email</label>
+            <input id="p-email" type="email" />
+            <label for="p-phone">Phone</label>
+            <input id="p-phone" />
+            <label for="p-summary">Profile summary</label>
+            <input id="p-summary" />
+            <label for="p-skills">Skills (comma separated)</label>
+            <input id="p-skills" />
+            <div class="form-actions">
+              <button id="generate-cv" type="button">Generate CV</button>
+            </div>
+          </form>
+
+          <div id="cv-preview" class="card" style="margin-top:12px;"></div>
+
+          <div class="card" id="humanizer-card" style="margin-top:12px;">
+            <h3>CV Humanizer</h3>
+            <label for="humanize-cv-source">Source</label>
+            <select id="humanize-cv-source">
+              <option value="generated">Generated CV</option>
+              <option value="paste">Paste CV text</option>
+              <option value="uploaded">Uploaded document (TXT only)</option>
+            </select>
+            <label for="humanize-cv-text">CV text</label>
+            <textarea id="humanize-cv-text" rows="5" placeholder="Paste CV text here"></textarea>
+            <select id="humanize-cv-doc-select"></select>
+            <div class="form-actions">
+              <button id="humanize-cv" type="button">Humanize CV</button>
+            </div>
+            <div id="humanize-results" style="margin-top:12px"></div>
+          </div>
+        </div>
+
+        <div class="card" id="ats-card">
+          <h2>ATS Scanner</h2>
+          <label for="jd-text">Paste Job Description</label>
+          <textarea id="jd-text" rows="6"></textarea>
+
+          <label for="cv-source">CV Source</label>
+          <select id="cv-source">
+            <option value="generated">Generated CV</option>
+            <option value="paste">Paste CV text</option>
+            <option value="uploaded">Uploaded document (TXT only)</option>
+          </select>
+
+          <textarea id="cv-text" rows="6" placeholder="Paste CV text here"></textarea>
+          <select id="cv-doc-select"></select>
+
+          <div class="form-actions">
+            <button id="run-ats" type="button">Scan</button>
+          </div>
+
+          <div id="ats-results" style="margin-top:12px"></div>
+        </div>
+
+        <div class="card" id="cv-templates-card" style="margin-top:12px;">
+          <h2>CV Templates & Export</h2>
+          <label for="template-select">Select template</label>
+          <select id="template-select"></select>
+          <div class="form-actions">
+            <button id="render-template" type="button">Preview Template</button>
+            <button id="export-cv" type="button">Export CV</button>
+          </div>
+          <label for="export-format">Export format</label>
+          <select id="export-format">
+            <option value="json">JSON</option>
+            <option value="markdown">Markdown</option>
+            <option value="csv">CSV</option>
+          </select>
+          <div id="template-preview" style="margin-top:12px"></div>
+        </div>
+
+        <div class="card" id="interview-card" style="margin-top:12px;">
+          <h2>Interview Prep Toolkit</h2>
+          <label for="interview-category">Question category</label>
+          <select id="interview-category">
+            <option value="all">All Categories</option>
+            <option value="behavioral">Behavioral</option>
+            <option value="technical">Technical</option>
+            <option value="situational">Situational</option>
+          </select>
+          <div class="form-actions">
+            <button id="get-question" type="button">Get Random Question</button>
+            <button id="show-tips" type="button">Show Tips</button>
+          </div>
+          <div id="question-display" style="margin-top:12px"></div>
+          <textarea id="interview-answer" rows="4" placeholder="Type your answer here..." style="margin-top:12px;display:none"></textarea>
+          <div id="interview-tips" style="margin-top:12px"></div>
+        </div>
+
+        <div class="card" id="recruiters-card" style="margin-top:12px;">
+          <h2>Recruiter CRM</h2>
+          <form id="recruiter-form" class="app-form">
+            <label for="r-name">Recruiter name</label>
+            <input id="r-name" placeholder="John Doe" />
+            <label for="r-company">Company</label>
+            <input id="r-company" placeholder="Tech Corp" />
+            <label for="r-email">Email</label>
+            <input id="r-email" type="email" />
+            <label for="r-phone">Phone</label>
+            <input id="r-phone" />
+            <label for="r-notes">Notes</label>
+            <textarea id="r-notes" rows="2"></textarea>
+            <div class="form-actions">
+              <button type="submit">Add Recruiter</button>
+            </div>
+          </form>
+          <div id="recruiters-list" style="margin-top:12px"></div>
+        </div>
+
+        <div class="card" id="analytics-card" style="margin-top:12px;">
+          <h2>Analytics & Insights</h2>
+          <div class="form-actions">
+            <button id="load-analytics" type="button">Load Analytics</button>
+            <button id="export-data" type="button">Export All Data</button>
+          </div>
+          <div id="analytics-display" style="margin-top:12px"></div>
+        </div>
       </section>
     </main>
 
     <script src="/app.js" defer></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/service-worker.js').catch(err => {
+          console.warn('Service Worker registration failed:', err);
+        });
+      }
+    </script>
   </body>
 </html>

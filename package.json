@@ -1,0 +1,9 @@
+{
+  "name": "tracker",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test": "node ./tests/run.js",
+    "lint": "eslint . --ext .js"
+  }
+}
