@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "dev": "vercel dev",
+    "setup": "node scripts/setup.js",
     "test": "node ./tests/run.js",
     "lint": "eslint . --ext .js"
   }
