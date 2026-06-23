@@ -34,8 +34,113 @@ body {
   min-height: 100vh;
   font-family: 'Space Grotesk', sans-serif;
   color: var(--ink);
-  background: linear-gradient(165deg, rgba(234,243,244,0.9) 0%, rgba(247,244,237,0.9) 50%, rgba(242,247,249,0.9) 100%);
+  background: radial-gradient(circle at top left, rgba(15,118,110,0.14), transparent 28%),
+    radial-gradient(circle at top right, rgba(96,165,250,0.12), transparent 20%),
+    linear-gradient(165deg, rgba(234,243,244,0.95) 0%, rgba(247,244,237,0.95) 50%, rgba(242,247,249,0.95) 100%);
   transition: background-color 320ms ease, color 240ms ease;
+}
+
+body.login-active .app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  width: 100vw;
+  margin: 0;
+}
+
+body.login-active .app-header,
+body.login-active #dashboard-section {
+  display: none;
+}
+
+body.login-active .auth-card {
+  max-width: 460px;
+  width: min(92vw, 460px);
+  padding: 2rem 1.5rem;
+}
+
+.login-top {
+  margin-bottom: 1.25rem;
+}
+
+.login-top h2 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 2.4rem);
+}
+
+.login-top p {
+  margin: 0.75rem 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.social-row {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.social-btn {
+  width: 100%;
+  padding: 0.95rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  font-weight: 700;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.social-btn:hover {
+  background: #f8fafc;
+}
+
+.google-btn {
+  color: #1f2937;
+}
+
+.or-separator {
+  display: flex;
+  align-items: center;
+  margin: 0.75rem 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.or-separator::before,
+.or-separator::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.or-separator span {
+  margin: 0 0.75rem;
+}
+
+.login-links {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.login-links a {
+  color: var(--accent-strong);
+  text-decoration: none;
+}
+
+.login-links a:hover {
+  text-decoration: underline;
 }
 
 [data-theme="dark"] body {

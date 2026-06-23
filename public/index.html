@@ -30,12 +30,24 @@
         </div>
       </header>
 
-      <section id="auth-section" class="card">
-        <h2>Login</h2>
+      <section id="auth-section" class="card auth-card">
+        <div class="login-top">
+          <h2>Welcome back</h2>
+          <p>Log in to your account and keep your job search on track.</p>
+        </div>
+        <div class="social-row">
+          <button type="button" class="social-btn google-btn">Continue with Google</button>
+        </div>
+        <div class="or-separator"><span>OR</span></div>
         <form id="login-form">
           <label for="password">Password</label>
           <input id="password" name="password" type="password" required minlength="8" autocomplete="current-password" />
-          <button type="submit">Sign in</button>
+          <button type="submit">Continue</button>
+          <div class="login-links">
+            <a href="#" onclick="event.preventDefault();">Forgot password?</a>
+            <span>•</span>
+            <a href="#" onclick="event.preventDefault();">Create one</a>
+          </div>
           <p id="login-message" class="message" role="status" aria-live="polite"></p>
         </form>
       </section>

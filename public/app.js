@@ -783,6 +783,7 @@ async function api(path, options = {}) {
 }
 
 function setAuthState(isLoggedIn) {
+  document.body.classList.toggle('login-active', !isLoggedIn);
   authSection.classList.toggle('hidden', isLoggedIn);
   dashboardSection.classList.toggle('hidden', !isLoggedIn);
 }
