@@ -278,27 +278,49 @@ button.secondary:hover:not(:disabled) {
 
 @media (max-width: 520px) {
   .app-shell {
-    width: calc(100vw - 32px);
-    padding: 16px;
+    width: calc(100vw - 24px);
+    padding: 14px;
     margin: 1rem auto 2rem;
   }
   #theme-toggle {
     padding: 6px 8px;
   }
+  .header-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .row-between {
+    flex-direction: column;
+    align-items: stretch;
+  }
   .kanban {
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
   }
   .form-actions button {
-    min-width: 100px;
-    padding: 0.65rem 0.75rem;
-    font-size: 0.9rem;
+    width: 100%;
+    min-width: 0;
+    padding: 0.8rem 0.9rem;
+    font-size: 0.95rem;
   }
   .app-item {
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
   }
   .app-actions {
     justify-content: flex-start;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .app-actions button {
+    width: auto;
+    flex: 1 1 45%;
+  }
+  .app-actions button:last-child {
+    flex: 1 1 100%;
   }
 }
 
@@ -395,15 +417,10 @@ button.secondary:hover:not(:disabled) {
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  background: var(--glass, rgba(255,255,255,0.6));
-  transition: all 240ms ease;
-}
-
-.app-item:hover {
-  border-color: var(--accent);
-  box-shadow: 0 6px 20px rgba(15, 118, 110, 0.12);
-  transform: translateY(-2px);
-}
+    align-items: flex-start;
+    background: var(--glass, rgba(255,255,255,0.6));
+    transition: all 240ms ease;
+    flex-wrap: wrap;
 
 .app-actions {
   display: flex;
