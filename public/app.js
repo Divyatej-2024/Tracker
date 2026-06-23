@@ -444,7 +444,9 @@ function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
   try {
     localStorage.setItem('theme', theme);
-  } catch (e) {}
+  } catch (e) {
+    // Ignore storage failures in browsers that disallow localStorage
+  }
   if (themeToggle) {
     themeToggle.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
     themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';

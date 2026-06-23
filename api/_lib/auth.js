@@ -1,6 +1,8 @@
 ﻿const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 
 const TOKEN_TTL_MS = 1000 * 60 * 60 * 12; // 12 hours
+const tokenBlacklist = new Set();
 
 function json(res, statusCode, payload) {
   res.status(statusCode).setHeader('Content-Type', 'application/json');
@@ -19,41 +21,30 @@ function sha256(value) {
   return crypto.createHash('sha256').update(value).digest('hex');
 }
 
-function signToken(payload, secret) {
-  const body = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
-  const signature = crypto.createHmac('sha256', secret).update(body).digest('base64url');
-  return `${body}.${signature}`;
+function createAuthToken() {
+  const secret = getEnvOrThrow('TOKEN_SECRET');
+  const payload = {
+    role: 'user'
+  };
+  return jwt.sign(payload, secret, { expiresIn: TOKEN_TTL_MS / 1000 });
 }
 
-function verifyToken(token, secret) {
+function verifyToken(token) {
   if (!token || typeof token !== 'string') return null;
-
-  const parts = token.split('.');
-  if (parts.length !== 2) return null;
-
-  const [body, providedSig] = parts;
-  const expectedSig = crypto.createHmac('sha256', secret).update(body).digest('base64url');
-
-  if (providedSig !== expectedSig) return null;
+  if (tokenBlacklist.has(token)) return null;
 
   try {
-    const payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf8'));
-    if (!payload || typeof payload !== 'object') return null;
-    if (!payload.exp || Date.now() > payload.exp) return null;
-    return payload;
+    const secret = getEnvOrThrow('TOKEN_SECRET');
+    return jwt.verify(token, secret);
   } catch {
     return null;
   }
 }
 
-function createAuthToken() {
-  const secret = getEnvOrThrow('TOKEN_SECRET');
-  const payload = {
-    role: 'user',
-    iat: Date.now(),
-    exp: Date.now() + TOKEN_TTL_MS
-  };
-  return signToken(payload, secret);
+function invalidateToken(token) {
+  if (!token || typeof token !== 'string') return false;
+  tokenBlacklist.add(token);
+  return true;
 }
 
 function parseAuthHeader(req) {
@@ -64,10 +55,8 @@ function parseAuthHeader(req) {
 }
 
 function requireAuth(req) {
-  const secret = getEnvOrThrow('TOKEN_SECRET');
   const token = parseAuthHeader(req);
-  const payload = verifyToken(token, secret);
-  return payload;
+  return verifyToken(token);
 }
 
 function verifyPassword(candidate) {
@@ -84,5 +73,7 @@ module.exports = {
   createAuthToken,
   json,
   requireAuth,
-  verifyPassword
+  verifyPassword,
+  invalidateToken,
+  verifyToken
 };
