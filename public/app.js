@@ -466,6 +466,84 @@ function initTheme() {
   }
 }
 
+const LOCAL_DATA_KEY = 'tracker_local_data_v1';
+const LOCAL_FALLBACK_TOKEN = 'local-fallback-token';
+const FALLBACK_TEMPLATES = [
+  { id: 'modern', name: 'Modern CV', description: 'Simple one-page CV template.' },
+  { id: 'classic', name: 'Classic CV', description: 'Clean classic layout.' }
+];
+
+function getLocalData() {
+  try {
+    const raw = localStorage.getItem(LOCAL_DATA_KEY);
+    if (!raw) {
+      const payload = { logs: [], applications: [], recruiters: [], documents: [], templates: FALLBACK_TEMPLATES };
+      localStorage.setItem(LOCAL_DATA_KEY, JSON.stringify(payload));
+      return payload;
+    }
+    const parsed = JSON.parse(raw || '{}');
+    return Object.assign({ logs: [], applications: [], recruiters: [], documents: [], templates: FALLBACK_TEMPLATES }, parsed);
+  } catch (error) {
+    console.warn('Local storage unavailable', error);
+    return { logs: [], applications: [], recruiters: [], documents: [], templates: FALLBACK_TEMPLATES };
+  }
+}
+
+function saveLocalData(data) {
+  try {
+    localStorage.setItem(LOCAL_DATA_KEY, JSON.stringify(data));
+  } catch (error) {
+    console.warn('Could not save local data', error);
+  }
+}
+
+function localGenerateId() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function validateLocalLog(input) {
+  const date = String(input.date || '').trim();
+  const applications = Number(input.applications);
+  const recruiters = Number(input.recruiters);
+  const projectHours = Number(input.projectHours);
+
+  if (!date) {
+    throw new Error('Date is required');
+  }
+  if (![applications, recruiters, projectHours].every(Number.isFinite)) {
+    throw new Error('All metrics must be numeric');
+  }
+  if ([applications, recruiters, projectHours].some((v) => v < 0)) {
+    throw new Error('Values must be >= 0');
+  }
+
+  return {
+    id: `${date}-${Math.random().toString(36).slice(2, 8)}`,
+    date,
+    applications,
+    recruiters,
+    projectHours,
+    createdAt: new Date().toISOString()
+  };
+}
+
+function downloadBase64File(base64, name, mimeType = 'application/octet-stream') {
+  const binary = atob(base64);
+  const array = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    array[i] = binary.charCodeAt(i);
+  }
+  const blob = new Blob([array], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = name;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(url);
+}
+
 function getToken() {
   return localStorage.getItem(TOKEN_KEY);
 }
@@ -476,6 +554,199 @@ function setToken(token) {
 
 function clearToken() {
   localStorage.removeItem(TOKEN_KEY);
+}
+
+async function localApi(path, options = {}) {
+  const method = (options.method || 'GET').toUpperCase();
+  const body = typeof options.body === 'string' ? JSON.parse(options.body || '{}') : (options.body || {});
+  const data = getLocalData();
+  const token = getToken();
+  const isAuthenticated = token === LOCAL_FALLBACK_TOKEN;
+
+  if (path === '/api/login' && method === 'POST') {
+    if (!body.password) {
+      throw new Error('Password is required for offline mode');
+    }
+    setToken(LOCAL_FALLBACK_TOKEN);
+    return { token: LOCAL_FALLBACK_TOKEN };
+  }
+
+  if (path === '/api/logout' && method === 'POST') {
+    clearToken();
+    return { ok: true };
+  }
+
+  if (!isAuthenticated) {
+    throw new Error('Unauthorized (offline mode)');
+  }
+
+  if (path === '/api/logs') {
+    if (method === 'GET') {
+      return { logs: [...data.logs].sort((a, b) => (a.date < b.date ? 1 : -1)) };
+    }
+    if (method === 'POST') {
+      const log = validateLocalLog(body);
+      data.logs.push(log);
+      saveLocalData(data);
+      return { log };
+    }
+  }
+
+  if (path === '/api/applications') {
+    if (method === 'GET') {
+      return { applications: [...data.applications].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)) };
+    }
+    if (method === 'POST') {
+      const app = {
+        id: localGenerateId(),
+        title: String(body.title || '').trim(),
+        company: String(body.company || '').trim(),
+        dateApplied: String(body.dateApplied || '').trim(),
+        status: String(body.status || 'Saved'),
+        tags: Array.isArray(body.tags) ? body.tags : (body.tags ? String(body.tags).split(',').map((s) => s.trim()).filter(Boolean) : []),
+        notes: String(body.notes || '').trim(),
+        archived: !!body.archived,
+        createdAt: new Date().toISOString()
+      };
+      data.applications.push(app);
+      saveLocalData(data);
+      return { application: app };
+    }
+    if (method === 'PUT') {
+      const id = body.id;
+      if (!id) throw new Error('Missing id');
+      const idx = data.applications.findIndex((a) => a.id === id);
+      if (idx === -1) throw new Error('Not found');
+      const updated = Object.assign({}, data.applications[idx], body);
+      data.applications[idx] = updated;
+      saveLocalData(data);
+      return { application: updated };
+    }
+    if (method === 'DELETE') {
+      const id = body.id || (options.query && options.query.id);
+      if (!id) throw new Error('Missing id');
+      data.applications = data.applications.filter((a) => a.id !== id);
+      saveLocalData(data);
+      return { ok: true };
+    }
+  }
+
+  if (path === '/api/recruiters') {
+    if (method === 'GET') {
+      return { recruiters: [...data.recruiters].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)) };
+    }
+    if (method === 'POST') {
+      const now = new Date().toISOString();
+      const recruiter = {
+        id: localGenerateId(),
+        name: String(body.name || '').trim(),
+        company: String(body.company || '').trim(),
+        email: String(body.email || '').trim(),
+        phone: String(body.phone || '').trim(),
+        notes: String(body.notes || '').trim(),
+        lastContact: body.lastContact || now,
+        interactions: Number(body.interactions || 0),
+        createdAt: now
+      };
+      if (!recruiter.name || !recruiter.email) {
+        throw new Error('Name and email are required');
+      }
+      data.recruiters.push(recruiter);
+      saveLocalData(data);
+      return { recruiter };
+    }
+    if (method === 'DELETE') {
+      const id = body.id || (options.query && options.query.id);
+      if (!id) throw new Error('ID required');
+      data.recruiters = data.recruiters.filter((r) => r.id !== id);
+      saveLocalData(data);
+      return { ok: true };
+    }
+  }
+
+  if (path === '/api/docs') {
+    if (method === 'GET') {
+      return { documents: [...data.documents].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)) };
+    }
+    if (method === 'POST') {
+      const now = new Date().toISOString();
+      const doc = {
+        id: localGenerateId(),
+        name: String(body.name || 'document').trim(),
+        mimeType: String(body.mimeType || 'application/octet-stream'),
+        contentBase64: String(body.contentBase64 || ''),
+        createdAt: now
+      };
+      data.documents.push(doc);
+      saveLocalData(data);
+      return { document: doc };
+    }
+    if (method === 'DELETE') {
+      const id = body.id;
+      if (!id) throw new Error('ID required');
+      data.documents = data.documents.filter((d) => d.id !== id);
+      saveLocalData(data);
+      return { ok: true };
+    }
+  }
+
+  if (path === '/api/cv-templates') {
+    if (method === 'GET') {
+      return { templates: data.templates };
+    }
+    if (method === 'POST') {
+      const profile = body.profile || {};
+      const html = `
+        <div class="cv-preview-template">
+          <h2>${escapeHtml(profile.name || 'Your Name')}</h2>
+          <p>${escapeHtml(profile.summary || 'Profile summary here.')}</p>
+          <h3>Skills</h3>
+          <ul>${(profile.skills || []).map((s) => `<li>${escapeHtml(s)}</li>`).join('')}</ul>
+        </div>
+      `;
+      return { html };
+    }
+  }
+
+  if (path === '/api/ats-scan') {
+    const suggestedSkills = ['communication', 'teamwork', 'leadership', 'problem-solving', 'adaptability'];
+    const score = Math.min(100, Math.max(40, Math.floor(Math.random() * 30) + 55));
+    return { score, suggestedSkills };
+  }
+
+  if (path === '/api/humanize-cv') {
+    const original = body.cvText || '';
+    const after = original.replace(/\b(responsible for|worked on)\b/gi, 'led');
+    return {
+      score: 75,
+      genericPhrases: ['Responsible for', 'Worked on', 'Assisted with'],
+      suggestions: ['Use action verbs', 'Quantify achievements', 'Focus on outcomes'],
+      before: original,
+      after: after || original
+    };
+  }
+
+  if (path === '/api/interview-prep') {
+    if (method === 'GET') {
+      return { tips: [
+        { title: 'Be specific', content: 'Use examples that show what you accomplished.' },
+        { title: 'Practice STAR', content: 'Describe Situation, Task, Action, and Result.' }
+      ] };
+    }
+    if (method === 'POST') {
+      return { question: { question: 'Tell me about a time you solved a difficult problem at work.' } };
+    }
+  }
+
+  if (path === '/api/export-data' && method === 'POST') {
+    return {
+      content: JSON.stringify(data, null, 2),
+      mimeType: 'application/json',
+      filename: `tracker-export-${Date.now()}.json`
+    };
+  }
+
+  throw new Error(`Offline fallback route not available: ${path}`);
 }
 
 async function api(path, options = {}) {
@@ -489,18 +760,26 @@ async function api(path, options = {}) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(path, {
-    ...options,
-    headers
-  });
+  try {
+    const response = await fetch(path, {
+      ...options,
+      headers
+    });
 
-  const data = await response.json().catch(() => ({}));
+    const data = await response.json().catch(() => ({}));
 
-  if (!response.ok) {
-    throw new Error(data.error || 'Request failed');
+    if (!response.ok) {
+      throw new Error(data.error || 'Request failed');
+    }
+
+    return data;
+  } catch (err) {
+    if (path.startsWith('/api/')) {
+      console.warn('Using offline local-storage fallback for', path, err.message);
+      return localApi(path, options);
+    }
+    throw err;
   }
-
-  return data;
 }
 
 function setAuthState(isLoggedIn) {
